@@ -1,0 +1,27 @@
+{
+	"name": "edifactParser",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"dev": "nodemon --exec tsx src/index.ts --ext ts",
+    "test": "vitest"
+	},
+	"keywords": [],
+	"author": "Carl Beattie",
+	"license": "ISC",
+	"packageManager": "pnpm@10.18.3",
+	"dependencies": {
+		"typescript": "^6.0.3"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/node": "^25.6.0",
+		"eslint": "^10.2.1",
+		"globals": "^17.5.0",
+		"jiti": "^2.6.1",
+		"nodemon": "^3.1.14",
+		"tsx": "^4.21.0",
+		"typescript-eslint": "^8.59.0"
+	}
+}
