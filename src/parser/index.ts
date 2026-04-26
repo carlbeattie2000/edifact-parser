@@ -1,3 +1,8 @@
+import { EdifactSyntaxError } from "../errors.js";
+import ComponentDataElement from "./component_data_element.js";
+import DataElement from "./data_element.js";
+import Segment from "./segment.js";
+
 export default class Parser {
 	private strict: boolean;
 
@@ -79,11 +84,53 @@ export default class Parser {
 		return tokens;
 	}
 
-	private segments(): string[] {
+	private rawSegments(): string[] {
 		return this.split(
 			this.rawContent,
 			this.DEFAULTS.segmentTerminator,
 			true,
 		).filter(Boolean);
+	}
+
+	private segments(segments: string[]): Segment[] {
+		const parsedSegments: Segment[] = [];
+
+		for (const segment of segments) {
+			const rawDataElements = this.split(
+				segment,
+				this.DEFAULTS.dataElementSeparator,
+				true,
+			);
+
+			const tag = rawDataElements.shift();
+
+			if (!tag) {
+				if (this.strict) {
+					throw new EdifactSyntaxError();
+				}
+				continue;
+			}
+
+			const rawComponents = rawDataElements.map((rawDataElement) =>
+				this.split(rawDataElement, this.DEFAULTS.componentSeparator, false),
+			);
+
+			const dataElements = rawComponents.map((rawComponentCollection) => {
+				const components = rawComponentCollection.map(
+					(rawComponent) => new ComponentDataElement(rawComponent),
+				);
+
+				return new DataElement(components);
+			});
+
+			parsedSegments.push(new Segment(tag, dataElements));
+		}
+
+    console.log(parsedSegments);
+	}
+
+	public parse() {
+		const rawSegments = this.rawSegments();
+		const segments = this.segments(rawSegments);
 	}
 }

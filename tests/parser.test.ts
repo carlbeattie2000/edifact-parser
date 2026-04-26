@@ -11,6 +11,12 @@ async function loadExampleBaplieFile() {
 	return fileContent;
 }
 
+describe('', async () => {
+  const textContent = await loadExampleBaplieFile();
+  const parser = new Parser(textContent);
+  parser.parse();
+});
+
 describe("Parser.split", () => {
   const parser = new Parser('')
 
