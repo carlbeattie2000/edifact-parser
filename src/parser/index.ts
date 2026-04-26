@@ -1,4 +1,6 @@
 export default class Parser {
+	private strict: boolean;
+
 	protected rawContent: string;
 
 	protected DEFAULTS = {
@@ -9,8 +11,9 @@ export default class Parser {
 		segmentTerminator: "'",
 	};
 
-	constructor(rawContent: string) {
+	constructor(rawContent: string, strict?: boolean) {
 		this.rawContent = rawContent.replace(/\r?\n/g, "");
+		this.strict = strict ?? false;
 		this.parseUNA();
 	}
 
@@ -29,13 +32,13 @@ export default class Parser {
 			this.DEFAULTS.segmentTerminator =
 				unaSpeicalCharacters[5] ?? this.DEFAULTS.segmentTerminator;
 
-      this.rawContent = this.deleteChars(this.rawContent, 9);
+			this.rawContent = this.deleteChars(this.rawContent, 9);
 		}
 	}
 
 	private deleteChars(str: string, count: number): string {
-    return str.slice(count);
-  }
+		return str.slice(count);
+	}
 
 	public split(
 		input: string,
@@ -77,6 +80,10 @@ export default class Parser {
 	}
 
 	private segments(): string[] {
-		return this.split(this.rawContent, this.DEFAULTS.segmentTerminator, true).filter(Boolean);
+		return this.split(
+			this.rawContent,
+			this.DEFAULTS.segmentTerminator,
+			true,
+		).filter(Boolean);
 	}
 }
