@@ -50,7 +50,7 @@ export default class Parser {
 	public split(
 		input: string,
 		delimiter: string,
-		preserveRelease = false,
+		stripRelease = false,
 	): string[] {
 		const tokens: string[] = [];
 		let current = "";
@@ -62,7 +62,7 @@ export default class Parser {
 					continue;
 				}
 				i++;
-				if (preserveRelease) {
+				if (stripRelease) {
 					current += input[i];
 				} else {
 					current += this.DEFAULTS.releaseCharacter + input[i];
