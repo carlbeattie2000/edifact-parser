@@ -1,5 +1,5 @@
 {
-	"name": "edifactParser",
+	"name": "neat-edifact",
 	"version": "0.1.0",
 	"type": "module",
 	"description": "",

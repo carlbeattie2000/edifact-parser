@@ -1,4 +1,4 @@
-# edifact-parser
+# neat-edifact
 
 A TypeScript parser for UN/EDIFACT interchanges. Give it a raw EDIFACT string, get back typed `Interchange`, `Message`, and `Segment` objects. That's it.
 
