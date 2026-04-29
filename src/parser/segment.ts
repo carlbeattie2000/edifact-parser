@@ -12,4 +12,8 @@ export default class Segment {
   public getDataElement(index: number): DataElement | undefined {
     return this.dataElements[index];
   }
+
+  public getQualifier(): string | undefined {
+    return this.getDataElement(0)?.getComponent(0)?.value;
+  }
 }
