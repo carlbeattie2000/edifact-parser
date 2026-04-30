@@ -1,33 +1,62 @@
-import type Interchange from "./interchange.js";
+import { InterchangeNotFoundError } from '../../errors.js';
+
+import type Interchange from './interchange.js';
 
 export default class InterchangeResult {
   #values: Interchange[];
+
   #errors: Error[];
 
-  public first() {
+  constructor(values: Interchange[], errors: Error[]) {
+    this.#values = values;
+    this.#errors = errors;
   }
 
-  public firstOrFail() {
+  public first(): Interchange | undefined {
+    return this.#values[0];
   }
 
-  public at() {
+  public firstOrFail(): Interchange {
+    const interchange = this.#values[0];
+
+    if (!interchange) {
+      throw new InterchangeNotFoundError();
+    }
+
+    return interchange;
   }
 
-  public atOrFail() {
+  public at(index: number): Interchange | undefined {
+    return this.#values[index];
   }
 
-  public length() {
+  public atOrFail(index: number): Interchange | undefined {
+    const interchange = this.#values[index];
+
+    if (!interchange) {
+      throw new InterchangeNotFoundError();
+    }
+
+    return interchange;
   }
 
-  public all() {
+  public length(): number {
+    return this.#values.length;
   }
 
-  public errors() {
+  public all(): Interchange[] {
+    return [...this.#values];
   }
 
-  public hasErrors() {
+  public errors(): Error[] {
+    return [...this.#errors];
   }
 
-  public isValid() {
+  public hasErrors(): boolean {
+    return this.#errors.length > 0;
+  }
+
+  public isValid(): boolean {
+    return this.#errors.length === 0 && this.#values.length > 0;
   }
 }
