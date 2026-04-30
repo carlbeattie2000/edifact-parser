@@ -1,8 +1,8 @@
 import { EdifactSyntaxError } from "../errors.js";
-import ComponentDataElement from "./component_data_element.js";
-import DataElement from "./data_element.js";
-import type Interchange from "./interchange.js";
-import InterchangeParser from "./interchange_parser.js";
+import ComponentDataElement from "./elements/component_data_element.js";
+import DataElement from "./elements/data_element.js";
+import type Interchange from "./interchange/interchange.js";
+import InterchangeParser from "./interchange/interchange_parser.js";
 import Segment from "./segment.js";
 
 export default class Parser {

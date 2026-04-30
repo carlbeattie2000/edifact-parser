@@ -1,4 +1,4 @@
-import type Segment from "./segment.js";
+import type Segment from "../segment.js";
 
 export default class Message {
 	public messageReferenceNumber: string = '';

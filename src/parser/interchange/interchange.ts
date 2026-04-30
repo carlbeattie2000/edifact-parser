@@ -1,4 +1,4 @@
-import type Message from "./message.js";
+import type Message from "../message/message.js";
 
 export default class Interchange {
 	public syntaxIdentifier: string = '';

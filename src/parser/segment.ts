@@ -1,4 +1,4 @@
-import type DataElement from "./data_element.js";
+import type DataElement from "./elements/data_element.js";
 
 export default class Segment {
   tag: string;
