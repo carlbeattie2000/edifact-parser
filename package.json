@@ -1,6 +1,6 @@
 {
 	"name": "neat-edifact",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"type": "module",
 	"description": "A TypeScript UN/EDIFACT interchange parser. Zero dependencies, strict and non-strict modes.",
 	"main": "./dist/index.js",
