@@ -181,13 +181,7 @@ export default class Parser {
     return interchanges;
   }
 
-  public parse(): Interchange[] {
-    const rawSegments = this.rawSegments();
-    const segments = this.segments(rawSegments);
-    return this.interchanges(segments);
-  }
-
-  public parseResult(): InterchangeResult {
+  public parse(): InterchangeResult {
     const rawSegments = this.rawSegments();
     const segments = this.segments(rawSegments);
     const interchanges = this.interchanges(segments);

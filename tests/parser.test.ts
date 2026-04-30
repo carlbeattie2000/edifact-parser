@@ -75,13 +75,13 @@ describe('Parser UNA handling', () => {
   it('uses default delimiters when no UNA present', () => {
     const parser = new Parser(VALID_EDIFACT_NO_UNA);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 
   it('parses UNA and extracts custom delimiters', () => {
     const parser = new Parser(VALID_EDIFACT);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 });
 
@@ -89,37 +89,40 @@ describe('Parser.parse - non strict mode', () => {
   it('parses a valid interchange', () => {
     const parser = new Parser(VALID_EDIFACT);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 
   it('parses interchange header correctly', () => {
     const parser = new Parser(VALID_EDIFACT);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    expect(interchange.syntaxIdentifier).toBe('UNOA');
-    expect(interchange.syntaxVersion).toBe('2');
-    expect(interchange.senderId).toBe('MAERSK');
-    expect(interchange.recipientId).toBe('GBFXT');
-    expect(interchange.date).toBe('260424');
-    expect(interchange.time).toBe('0811');
-    expect(interchange.controlReference).toBe('000001');
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    expect(first.syntaxIdentifier).toBe('UNOA');
+    expect(first.syntaxVersion).toBe('2');
+    expect(first.senderId).toBe('MAERSK');
+    expect(first.recipientId).toBe('GBFXT');
+    expect(first.date).toBe('260424');
+    expect(first.time).toBe('0811');
+    expect(first.controlReference).toBe('000001');
   });
 
   it('parses interchange message count', () => {
     const parser = new Parser(VALID_EDIFACT);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    expect(interchange.declaredMessageCount).toBe(1);
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    expect(first.declaredMessageCount).toBe(1);
   });
 
   it('parses message header correctly', () => {
     const parser = new Parser(VALID_EDIFACT);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    const [message] = interchange.messages;
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    const [message] = first.messages;
     expect(message).toBeDefined();
     if (!message) return;
     expect(message.messageReferenceNumber).toBe('000001');
@@ -132,10 +135,11 @@ describe('Parser.parse - non strict mode', () => {
 
   it('parses message segments correctly', () => {
     const parser = new Parser(VALID_EDIFACT);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    const [message] = interchange.messages;
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    const [message] = first.messages;
     expect(message).toBeDefined();
     if (!message) return;
     expect(message.segments).toHaveLength(2);
@@ -145,12 +149,13 @@ describe('Parser.parse - non strict mode', () => {
 
   it('parses two messages in one interchange', () => {
     const parser = new Parser(VALID_EDIFACT_TWO_MESSAGES);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    expect(interchange.messages).toHaveLength(2);
-    expect(interchange.messages[0]!.messageReferenceNumber).toBe('000001');
-    expect(interchange.messages[1]!.messageReferenceNumber).toBe('000002');
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    expect(first.messages).toHaveLength(2);
+    expect(first.messages[0]!.messageReferenceNumber).toBe('000001');
+    expect(first.messages[1]!.messageReferenceNumber).toBe('000002');
   });
 
   it('creates orphan interchange when segments appear before UNB', () => {
@@ -161,7 +166,7 @@ UNT+2+000001'
 UNZ+1+000001'`;
     const parser = new Parser(input);
     const result = parser.parse();
-    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(result.length()).toBeGreaterThanOrEqual(1);
   });
 
   it('handles missing UNZ gracefully', () => {
@@ -171,7 +176,7 @@ BGM++V123456+9'
 UNT+3+000001'`;
     const parser = new Parser(input);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 
   it('handles missing UNT gracefully', () => {
@@ -181,7 +186,7 @@ BGM++V123456+9'
 UNZ+1+000001'`;
     const parser = new Parser(input);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 
   it('handles multiple UNB as multiple interchanges', () => {
@@ -195,7 +200,7 @@ UNT+2+000001'
 UNZ+1+000002'`;
     const parser = new Parser(input);
     const result = parser.parse();
-    expect(result).toHaveLength(2);
+    expect(result.all()).toHaveLength(2);
   });
 });
 
@@ -203,7 +208,7 @@ describe('Parser.parse - strict mode', () => {
   it('parses a valid interchange in strict mode', () => {
     const parser = new Parser(VALID_EDIFACT, true);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 
   it('throws when first segment is not UNB', () => {
@@ -286,10 +291,11 @@ UNZ+1+000001'`;
 describe('Parser - segment data elements', () => {
   it('parses data elements correctly', () => {
     const parser = new Parser(VALID_EDIFACT);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    const [message] = interchange.messages;
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    const [message] = first.messages;
     expect(message).toBeDefined();
     if (!message) return;
     const bgm = message.segments[0];
@@ -301,10 +307,11 @@ describe('Parser - segment data elements', () => {
 
   it('parses composite data elements correctly', () => {
     const parser = new Parser(VALID_EDIFACT);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    const [message] = interchange.messages;
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    const [message] = first.messages;
     expect(message).toBeDefined();
     if (!message) return;
     const dtm = message.segments[1];
@@ -326,23 +333,25 @@ describe('Parser - example EDIFACT file', () => {
   it('returns one interchange', () => {
     const parser = new Parser(textContent);
     const result = parser.parse();
-    expect(result).toHaveLength(1);
+    expect(result.all()).toHaveLength(1);
   });
 
   it('has one message', () => {
     const parser = new Parser(textContent);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    expect(interchange.messages).toHaveLength(1);
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    expect(first.messages).toHaveLength(1);
   });
 
   it('message type is BAPLIE', () => {
     const parser = new Parser(textContent);
-    const [interchange] = parser.parse();
-    expect(interchange).toBeDefined();
-    if (!interchange) return;
-    expect(interchange.messages[0]!.messageType).toBe('BAPLIE');
+    const result = parser.parse();
+    const first = result.first();
+    expect(first).toBeDefined();
+    if (!first) return;
+    expect(first.messages[0]!.messageType).toBe('BAPLIE');
   });
 });
 
@@ -351,63 +360,63 @@ describe('Parser - example parseResult()', () => {
 
   it('parses without throwing', () => {
     const parser = new Parser(textContent);
-    expect(() => parser.parseResult()).not.toThrow();
+    expect(() => parser.parse()).not.toThrow();
   });
 
   it('first() returns valid interchange', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     const first = result.first();
     expect(first).toBeDefined();
   });
 
   it('firstOrValid() returns valid interchange', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     const first = result.firstOrFail();
     expect(first).toBeDefined();
   });
 
   it('firstOrValid() throws when no interchange', () => {
     const parser = new Parser('');
-    const result = parser.parseResult();
+    const result = parser.parse();
     expect(() => result.firstOrFail()).toThrow(InterchangeNotFoundError);
   });
 
   it('at() returns valid interchange', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     const first = result.at(0);
     expect(first).toBeDefined();
   });
 
   it('atOrFail() throws when no interchange at the index', () => {
     const parser = new Parser('');
-    const result = parser.parseResult();
+    const result = parser.parse();
     expect(() => result.atOrFail(1)).toThrow(InterchangeNotFoundError);
   });
 
   it('length() returns correct interchanges inner array length', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     expect(result.length()).toEqual(1);
   });
 
   it('all() returns all the inner interchange array', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     expect(result.all()).toHaveLength(1);
   });
 
   it('hasErrors() returns false ', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     expect(result.hasErrors()).toBeFalsy();
   });
 
   it('isValid() returns true', () => {
     const parser = new Parser(textContent);
-    const result = parser.parseResult();
+    const result = parser.parse();
     expect(result.isValid()).toBeTruthy();
   });
 });

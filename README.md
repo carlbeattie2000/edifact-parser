@@ -22,15 +22,15 @@ BGM++V123456+9'
 UNT+3+000001'
 UNZ+1+000001'`
 
-const interchanges = new Parser(raw).parse()
-const [interchange] = interchanges
+const result = new Parser(raw).parse()
+const interchange = result.first();
 
 console.log(interchange.senderId)   // 'SENDER'
 console.log(interchange.messages[0].messageType) // 'BAPLIE'
 console.log(interchange.messages[0].segments[0].tag) // 'BGM'
 ```
 
-`parse()` always returns an array — even for single interchange files. Just use `result[0]` for the common case.
+`parse()` always returns `InterchangeResult` — even for single interchange files. Just use `result.first()` for the common case.
 
 ## Strict mode
 
@@ -60,8 +60,23 @@ If the file has a `UNA` service string advice, the parser reads it automatically
 
 ```ts
 new Parser(rawContent: string, strict?: boolean)
-parser.parse(): Interchange[]
+parser.parse(): InterchangeResult
 ```
+
+### `InterchangeResult`
+
+```ts
+interchangeResult.first()
+interchangeResult.firstOrFail()
+interchangeResult.at(0)
+interchangeResult.atOrFail(1)
+interchangeResult.length()
+interchangeResult.all()
+interchangeResult.errors()
+interchangeResult.hasErrors()
+interchangeResult.isValid()
+```
+
 
 ### `Interchange`
 
@@ -102,15 +117,16 @@ segment.getDataElement(0)?.getComponent(1)?.value  // specific component
 ## Errors
 
 ```ts
-import { EdifactSyntaxError, EdifactEnvelopeError, EdifactValidationError } from 'neat-edifact'
+import { EdifactSyntaxError, EdifactEnvelopeError, EdifactValidationError, InterchangeNotFoundError } from 'neat-edifact'
 ```
 
 - `EdifactSyntaxError` — malformed input, e.g. a segment with no tag
 - `EdifactEnvelopeError` — missing or broken `UNB`/`UNZ`/`UNH`/`UNT` structure
 - `EdifactValidationError` — count or reference mismatches (strict mode only)
+- `InterchangeNotFoundError` — thrown by `.firstOrFail()` when the result is empty, or `.atOrFail(n)` when no interchange exists at that index
 
 ## Notes
 
-- Multiple interchanges in one file are supported in non-strict mode — each `UNB` produces a separate `Interchange` in the result array
+- Multiple interchanges in one file are supported in non-strict mode — each `UNB` produces a separate `Interchange` on the `InterchangeResult`
 - The release character (`?` by default) is handled correctly at all levels
 - Zero runtime dependencies
