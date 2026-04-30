@@ -7,14 +7,14 @@ It handles the syntax layer only — no segment group logic, no domain-specific 
 ## Install
 
 ```bash
-npm install neat-parser
-pnpm add neat-parser
+npm install neat-edifact
+pnpm add neat-edifact
 ```
 
 ## Usage
 
 ```ts
-import { Parser } from 'neat-parser'
+import { Parser } from 'neat-edifact'
 
 const raw = `UNB+UNOA:2+SENDER+RECEIVER+260424:0811+000001'
 UNH+000001+BAPLIE:D:95B:UN:SMDG20'
@@ -102,7 +102,7 @@ segment.getDataElement(0)?.getComponent(1)?.value  // specific component
 ## Errors
 
 ```ts
-import { EdifactSyntaxError, EdifactEnvelopeError, EdifactValidationError } from 'neat-parser'
+import { EdifactSyntaxError, EdifactEnvelopeError, EdifactValidationError } from 'neat-edifact'
 ```
 
 - `EdifactSyntaxError` — malformed input, e.g. a segment with no tag
