@@ -8,11 +8,11 @@ import Segment from './segment.js';
 import type Interchange from './interchange/interchange.js';
 
 export default class Parser {
-  private strict: boolean;
+  #strict: boolean;
 
-  protected rawContent: string;
+  #rawContent: string;
 
-  protected DEFAULTS = {
+  #DEFAULTS = {
     componentSeparator: ':',
     dataElementSeparator: '+',
     decimalNotation: '.',
@@ -23,23 +23,23 @@ export default class Parser {
   #errors: Error[];
 
   constructor(rawContent: string, strict?: boolean) {
-    this.rawContent = rawContent.replace(/\r?\n/g, '');
-    this.strict = strict ?? false;
+    this.#rawContent = rawContent.replace(/\r?\n/g, '');
+    this.#strict = strict ?? false;
     this.#errors = [];
     this.parseUNA();
   }
 
   private parseUNA() {
-    if (this.rawContent.trimStart().startsWith('UNA')) {
-      const unaSpeicalCharacters = this.rawContent.slice(3, 9).split('');
+    if (this.#rawContent.trimStart().startsWith('UNA')) {
+      const unaSpeicalCharacters = this.#rawContent.slice(3, 9).split('');
 
-      this.DEFAULTS.componentSeparator = unaSpeicalCharacters[0] ?? this.DEFAULTS.componentSeparator;
-      this.DEFAULTS.dataElementSeparator = unaSpeicalCharacters[1] ?? this.DEFAULTS.dataElementSeparator;
-      this.DEFAULTS.decimalNotation = unaSpeicalCharacters[2] ?? this.DEFAULTS.decimalNotation;
-      this.DEFAULTS.releaseCharacter = unaSpeicalCharacters[3] ?? this.DEFAULTS.releaseCharacter;
-      this.DEFAULTS.segmentTerminator = unaSpeicalCharacters[5] ?? this.DEFAULTS.segmentTerminator;
+      this.#DEFAULTS.componentSeparator = unaSpeicalCharacters[0] ?? this.#DEFAULTS.componentSeparator;
+      this.#DEFAULTS.dataElementSeparator = unaSpeicalCharacters[1] ?? this.#DEFAULTS.dataElementSeparator;
+      this.#DEFAULTS.decimalNotation = unaSpeicalCharacters[2] ?? this.#DEFAULTS.decimalNotation;
+      this.#DEFAULTS.releaseCharacter = unaSpeicalCharacters[3] ?? this.#DEFAULTS.releaseCharacter;
+      this.#DEFAULTS.segmentTerminator = unaSpeicalCharacters[5] ?? this.#DEFAULTS.segmentTerminator;
 
-      this.rawContent = this.deleteChars(this.rawContent, 9);
+      this.#rawContent = this.deleteChars(this.#rawContent, 9);
     }
   }
 
@@ -56,7 +56,7 @@ export default class Parser {
     let current = '';
 
     for (let i = 0; i < input.length; i++) {
-      if (input[i] === this.DEFAULTS.releaseCharacter) {
+      if (input[i] === this.#DEFAULTS.releaseCharacter) {
         if (i + 1 > input.length) {
           current += input[i];
           continue;
@@ -65,7 +65,7 @@ export default class Parser {
         if (stripRelease) {
           current += input[i];
         } else {
-          current += this.DEFAULTS.releaseCharacter + input[i];
+          current += this.#DEFAULTS.releaseCharacter + input[i];
         }
         continue;
       }
@@ -88,8 +88,8 @@ export default class Parser {
 
   private rawSegments(): string[] {
     return this.split(
-      this.rawContent,
-      this.DEFAULTS.segmentTerminator,
+      this.#rawContent,
+      this.#DEFAULTS.segmentTerminator,
       true,
     ).filter(Boolean);
   }
@@ -100,21 +100,21 @@ export default class Parser {
     for (const segment of segments) {
       const rawDataElements = this.split(
         segment,
-        this.DEFAULTS.dataElementSeparator,
+        this.#DEFAULTS.dataElementSeparator,
         true,
       );
 
       const tag = rawDataElements.shift();
 
       if (!tag) {
-        if (this.strict) {
+        if (this.#strict) {
           throw new EdifactSyntaxError();
         }
         this.#errors.push(new EdifactSyntaxError());
         continue;
       }
 
-      const rawComponents = rawDataElements.map((rawDataElement) => this.split(rawDataElement, this.DEFAULTS.componentSeparator, false));
+      const rawComponents = rawDataElements.map((rawDataElement) => this.split(rawDataElement, this.#DEFAULTS.componentSeparator, false));
 
       const dataElements = rawComponents.map((rawComponentCollection) => {
         const components = rawComponentCollection.map(
@@ -134,7 +134,7 @@ export default class Parser {
     segments: Segment[],
     checks: ((segments: Segment[]) => void)[],
   ): void {
-    if (!this.strict) return;
+    if (!this.#strict) return;
 
     checks.forEach((check) => {
       check(segments);
@@ -142,7 +142,7 @@ export default class Parser {
   }
 
   public interchanges(segments: Segment[]) {
-    const interchangeParser = new InterchangeParser(this.strict);
+    const interchangeParser = new InterchangeParser(this.#strict);
 
     this.preValidate(segments, [
       interchangeParser.strictModeInterchangeCheck.bind(interchangeParser),

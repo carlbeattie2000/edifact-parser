@@ -1,8 +1,8 @@
 import type DataElement from "./elements/data_element.js";
 
 export default class Segment {
-  tag: string;
-  dataElements: DataElement[];
+  public tag: string;
+  public dataElements: DataElement[];
 
   constructor(tag: string, dataElements: DataElement[]) {
     this.tag = tag;

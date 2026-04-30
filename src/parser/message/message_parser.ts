@@ -5,15 +5,15 @@ import type InterchangeParser from '../interchange/interchange_parser.js';
 import type Segment from '../segment.js';
 
 export default class MessageParser {
-  private currentMessage: Message | null = null;
+  #currentMessage: Message | null = null;
 
-  private strict = false;
+  #strict = false;
 
-  private interchangeParser: InterchangeParser;
+  #interchangeParser: InterchangeParser;
 
   constructor(strict: boolean, interchangeParser: InterchangeParser) {
-    this.strict = strict;
-    this.interchangeParser = interchangeParser;
+    this.#strict = strict;
+    this.#interchangeParser = interchangeParser;
   }
 
   public isMessageHeader(segment: Segment): boolean {
@@ -68,7 +68,7 @@ export default class MessageParser {
     const declaredSegmentCount = Number(segment.getDataElement(0)?.Value ?? 0);
     const controlReference = segment.getDataElement(1)?.Value ?? '';
 
-    if (this.strict && controlReference !== message.messageReferenceNumber) {
+    if (this.#strict && controlReference !== message.messageReferenceNumber) {
       throw new EdifactValidationError();
     }
 
@@ -76,57 +76,57 @@ export default class MessageParser {
   }
 
   public handleOpenMessage(segment?: Segment) {
-    if (this.currentMessage) {
-      if (this.interchangeParser.CurrentInterchange) {
-        this.interchangeParser.CurrentInterchange.messages.push(
-          this.currentMessage,
+    if (this.#currentMessage) {
+      if (this.#interchangeParser.CurrentInterchange) {
+        this.#interchangeParser.CurrentInterchange.messages.push(
+          this.#currentMessage,
         );
       }
-      this.currentMessage = null;
+      this.#currentMessage = null;
     }
 
     if (segment) {
-      this.currentMessage = this.parseMessageHeader(segment);
+      this.#currentMessage = this.parseMessageHeader(segment);
     } else {
-      this.currentMessage = new Message();
+      this.#currentMessage = new Message();
     }
   }
 
   public handleCloseMessage(segment?: Segment) {
-    if (this.currentMessage) {
+    if (this.#currentMessage) {
       if (segment) {
-        this.parseMessageTrailer(segment, this.currentMessage);
-        if (this.interchangeParser.CurrentInterchange) {
-          this.interchangeParser.CurrentInterchange.messages.push(
-            this.currentMessage,
+        this.parseMessageTrailer(segment, this.#currentMessage);
+        if (this.#interchangeParser.CurrentInterchange) {
+          this.#interchangeParser.CurrentInterchange.messages.push(
+            this.#currentMessage,
           );
         }
       }
-      this.currentMessage = null;
+      this.#currentMessage = null;
     }
   }
 
   public prepareForSegments() {
-    if (!this.currentMessage) {
-      this.currentMessage = new Message();
+    if (!this.#currentMessage) {
+      this.#currentMessage = new Message();
     }
   }
 
   public receiveSegment(segment: Segment) {
-    if (this.currentMessage) {
-      this.currentMessage.segments.push(segment);
+    if (this.#currentMessage) {
+      this.#currentMessage.segments.push(segment);
     }
   }
 
   public terminate() {
-    if (this.interchangeParser.CurrentInterchange) {
-      if (this.currentMessage) {
-        this.interchangeParser.CurrentInterchange.messages.push(this.currentMessage);
+    if (this.#interchangeParser.CurrentInterchange) {
+      if (this.#currentMessage) {
+        this.#interchangeParser.CurrentInterchange.messages.push(this.#currentMessage);
       }
     }
 
-    if (this.currentMessage) {
-      this.currentMessage = null;
+    if (this.#currentMessage) {
+      this.#currentMessage = null;
     }
   }
 }

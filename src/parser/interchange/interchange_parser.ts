@@ -5,21 +5,21 @@ import MessageParser from '../message/message_parser.js';
 import type Segment from '../segment.js';
 
 export default class InterchangeParser {
-  private interchanges: Interchange[] = [];
+  #interchanges: Interchange[] = [];
 
-  private currentInterchange: Interchange | null = null;
+  #currentInterchange: Interchange | null = null;
 
-  private strict = false;
+  #strict = false;
 
   public messageParser: MessageParser;
 
   constructor(strict: boolean) {
-    this.strict = strict;
+    this.#strict = strict;
     this.messageParser = new MessageParser(strict, this);
   }
 
   public get CurrentInterchange() {
-    return this.currentInterchange;
+    return this.#currentInterchange;
   }
 
   public isInterchangeHeader(segment: Segment): boolean {
@@ -31,7 +31,7 @@ export default class InterchangeParser {
   }
 
   public strictModeInterchangeCheck(segments: Segment[]) {
-    if (!this.strict) {
+    if (!this.#strict) {
       return;
     }
 
@@ -82,43 +82,43 @@ export default class InterchangeParser {
     );
     const controlReference = segment.getDataElement(1)?.Value ?? '';
 
-    if (this.strict && controlReference !== interchange.controlReference) {
+    if (this.#strict && controlReference !== interchange.controlReference) {
       throw new EdifactValidationError();
     }
   }
 
   public handleInterchangeOpen(segment?: Segment) {
-    if (this.currentInterchange) {
+    if (this.#currentInterchange) {
       this.messageParser.handleOpenMessage();
-      this.interchanges.push(this.currentInterchange);
+      this.#interchanges.push(this.#currentInterchange);
     }
 
     if (segment) {
-      this.currentInterchange = this.parseInterchangeHeader(segment);
+      this.#currentInterchange = this.parseInterchangeHeader(segment);
     } else {
-      this.currentInterchange = new Interchange();
+      this.#currentInterchange = new Interchange();
     }
   }
 
   public handleInterchangeClose(segment?: Segment) {
-    if (this.currentInterchange) {
+    if (this.#currentInterchange) {
       if (segment) {
-        this.parseInterchangeTrailer(segment, this.currentInterchange);
+        this.parseInterchangeTrailer(segment, this.#currentInterchange);
       }
       this.messageParser.handleOpenMessage();
-      this.interchanges.push(this.currentInterchange);
+      this.#interchanges.push(this.#currentInterchange);
     }
-    this.currentInterchange = null;
+    this.#currentInterchange = null;
   }
 
   public prepareForMessages() {
-    if (!this.currentInterchange) {
-      this.currentInterchange = new Interchange();
+    if (!this.#currentInterchange) {
+      this.#currentInterchange = new Interchange();
     }
   }
 
   private postValidate(interchanges: Interchange[]) {
-    if (!this.strict) return;
+    if (!this.#strict) return;
 
     for (const interchange of interchanges) {
       if (interchange.declaredMessageCount !== interchange.messages.length) {
@@ -136,13 +136,13 @@ export default class InterchangeParser {
   public terminate(): Interchange[] {
     this.messageParser.terminate();
 
-    if (this.currentInterchange) {
-      this.interchanges.push(this.currentInterchange);
-      this.currentInterchange = null;
+    if (this.#currentInterchange) {
+      this.#interchanges.push(this.#currentInterchange);
+      this.#currentInterchange = null;
     }
 
-    this.postValidate(this.interchanges);
+    this.postValidate(this.#interchanges);
 
-    return this.interchanges;
+    return this.#interchanges;
   }
 }
