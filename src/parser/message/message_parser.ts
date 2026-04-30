@@ -1,5 +1,6 @@
 import Message from './index.js';
-import { EdifactEnvelopeError, EdifactValidationError } from '../../errors.js';
+import EdifactEnvelopeError from '../../errors/EdifactEnvelopeError.js';
+import EdifactValidationError from '../../errors/EdifactValidationError.js';
 
 import type InterchangeParser from '../interchange/interchange_parser.js';
 import type Segment from '../segment.js';
@@ -16,43 +17,46 @@ export default class MessageParser {
     this.#interchangeParser = interchangeParser;
   }
 
-  public isMessageHeader(segment: Segment): boolean {
+  public static isMessageHeader(segment: Segment): boolean {
     return segment.tag === 'UNH';
   }
 
-  public isMessageTrailer(segment: Segment): boolean {
+  public static isMessageTrailer(segment: Segment): boolean {
     return segment.tag === 'UNT';
   }
 
   public strictModeMessagesCheck(segments: Segment[]): void {
+    if (!this.#strict) {
+      return;
+    }
     let start = -1;
     let end = -1;
     let index = 0;
 
-    for (const segment of segments) {
-      if (this.isMessageHeader(segment)) {
+    segments.forEach((segment) => {
+      if (MessageParser.isMessageHeader(segment)) {
         if (start > end) {
           throw new EdifactEnvelopeError();
         }
         start = index;
       }
 
-      if (this.isMessageTrailer(segment)) {
+      if (MessageParser.isMessageTrailer(segment)) {
         if (start < end) {
           throw new EdifactEnvelopeError();
         }
         end = index;
       }
 
-      index++;
-    }
+      index += 1;
+    });
 
     if (start > end) {
       throw new EdifactEnvelopeError();
     }
   }
 
-  private parseMessageHeader(segment: Segment): Message {
+  static #parseMessageHeader(segment: Segment): Message {
     const message = new Message();
     message.messageReferenceNumber = segment.getDataElement(0)?.Value ?? '';
     const messageIdentifier = segment.getDataElement(1);
@@ -75,7 +79,7 @@ export default class MessageParser {
     message.declaredSegmentCount = declaredSegmentCount;
   }
 
-  public handleOpenMessage(segment?: Segment) {
+  public handleOpenMessage(segment?: Segment): void {
     if (this.#currentMessage) {
       if (this.#interchangeParser.CurrentInterchange) {
         this.#interchangeParser.CurrentInterchange.messages.push(
@@ -86,13 +90,13 @@ export default class MessageParser {
     }
 
     if (segment) {
-      this.#currentMessage = this.parseMessageHeader(segment);
+      this.#currentMessage = MessageParser.#parseMessageHeader(segment);
     } else {
       this.#currentMessage = new Message();
     }
   }
 
-  public handleCloseMessage(segment?: Segment) {
+  public handleCloseMessage(segment?: Segment): void {
     if (this.#currentMessage) {
       if (segment) {
         this.parseMessageTrailer(segment, this.#currentMessage);
@@ -106,19 +110,19 @@ export default class MessageParser {
     }
   }
 
-  public prepareForSegments() {
+  public prepareForSegments(): void {
     if (!this.#currentMessage) {
       this.#currentMessage = new Message();
     }
   }
 
-  public receiveSegment(segment: Segment) {
+  public receiveSegment(segment: Segment): void {
     if (this.#currentMessage) {
       this.#currentMessage.segments.push(segment);
     }
   }
 
-  public terminate() {
+  public terminate(): void {
     if (this.#interchangeParser.CurrentInterchange) {
       if (this.#currentMessage) {
         this.#interchangeParser.CurrentInterchange.messages.push(this.#currentMessage);

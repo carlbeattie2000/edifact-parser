@@ -1,4 +1,4 @@
-import { InterchangeNotFoundError } from '../../errors.js';
+import InterchangeNotFoundError from '../../errors/InterchangeNotFoundError.js';
 import CollectionResult from '../collection_results/collection_result.js';
 
 import type Interchange from './interchange.js';
@@ -24,7 +24,7 @@ export default class InterchangeResult extends CollectionResult<Interchange> {
     return this.#errors.length > 0;
   }
 
-  protected isValid(): boolean {
+  public override isValid(): boolean {
     return super.isValid() && this.#errors.length === 0;
   }
 }

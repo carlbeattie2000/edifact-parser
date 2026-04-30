@@ -1,23 +1,23 @@
-import type ComponentDataElement from "./component_data_element.js";
+import type ComponentDataElement from './component_data_element.js';
 
 export default class DataElement {
-	components: ComponentDataElement[];
+  components: ComponentDataElement[];
 
-	constructor(components: ComponentDataElement[]) {
-		this.components = components;
-	}
+  constructor(components: ComponentDataElement[]) {
+    this.components = components;
+  }
 
-	get Value(): string {
-		const headComponent = this.components[0];
+  get Value(): string {
+    const headComponent = this.components[0];
 
-		return headComponent?.value ?? "";
-	}
+    return headComponent?.value ?? '';
+  }
 
-	public getComponent(index: number): ComponentDataElement | undefined {
-		return this.components[index];
-	}
+  public getComponent(index: number): ComponentDataElement | undefined {
+    return this.components[index];
+  }
 
-  public addComponent(component: ComponentDataElement) {
+  public addComponent(component: ComponentDataElement): void {
     this.components.push(component);
   }
 }

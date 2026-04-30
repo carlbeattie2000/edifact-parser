@@ -1,5 +1,6 @@
 import Interchange from './interchange.js';
-import { EdifactEnvelopeError, EdifactValidationError } from '../../errors.js';
+import EdifactEnvelopeError from '../../errors/EdifactEnvelopeError.js';
+import EdifactValidationError from '../../errors/EdifactValidationError.js';
 import MessageParser from '../message/message_parser.js';
 
 import type Segment from '../segment.js';
@@ -18,19 +19,19 @@ export default class InterchangeParser {
     this.messageParser = new MessageParser(strict, this);
   }
 
-  public get CurrentInterchange() {
+  public get CurrentInterchange(): Interchange | null {
     return this.#currentInterchange;
   }
 
-  public isInterchangeHeader(segment: Segment): boolean {
+  static isInterchangeHeader(segment: Segment): boolean {
     return segment.tag === 'UNB';
   }
 
-  public isInterchangeTrailer(segment: Segment): boolean {
+  static isInterchangeTrailer(segment: Segment): boolean {
     return segment.tag === 'UNZ';
   }
 
-  public strictModeInterchangeCheck(segments: Segment[]) {
+  public strictModeInterchangeCheck(segments: Segment[]): void {
     if (!this.#strict) {
       return;
     }
@@ -38,33 +39,33 @@ export default class InterchangeParser {
     const head = segments[0];
     const tail = segments[segments.length - 1];
 
-    if (!head || !this.isInterchangeHeader(head)) {
+    if (!head || !InterchangeParser.isInterchangeHeader(head)) {
       throw new EdifactEnvelopeError();
     }
 
-    if (!tail || !this.isInterchangeTrailer(tail)) {
+    if (!tail || !InterchangeParser.isInterchangeTrailer(tail)) {
       throw new EdifactEnvelopeError();
     }
 
     let headerCount = 0;
     let trailerCount = 0;
 
-    for (const segment of segments) {
-      if (this.isInterchangeHeader(segment)) {
-        headerCount++;
+    segments.forEach((segment) => {
+      if (InterchangeParser.isInterchangeHeader(segment)) {
+        headerCount += 1;
       }
 
-      if (this.isInterchangeTrailer(segment)) {
-        trailerCount++;
+      if (InterchangeParser.isInterchangeTrailer(segment)) {
+        trailerCount += 1;
       }
-    }
+    });
 
     if (headerCount > 1 || trailerCount > 1) {
       throw new EdifactEnvelopeError();
     }
   }
 
-  private parseInterchangeHeader(segment: Segment): Interchange {
+  static #parseInterchangeHeader(segment: Segment): Interchange {
     const interchange = new Interchange();
     interchange.syntaxIdentifier = segment.getDataElement(0)?.getComponent(0)?.value ?? '';
     interchange.syntaxVersion = segment.getDataElement(0)?.getComponent(1)?.value ?? '';
@@ -87,20 +88,20 @@ export default class InterchangeParser {
     }
   }
 
-  public handleInterchangeOpen(segment?: Segment) {
+  public handleInterchangeOpen(segment?: Segment): void {
     if (this.#currentInterchange) {
       this.messageParser.handleOpenMessage();
       this.#interchanges.push(this.#currentInterchange);
     }
 
     if (segment) {
-      this.#currentInterchange = this.parseInterchangeHeader(segment);
+      this.#currentInterchange = InterchangeParser.#parseInterchangeHeader(segment);
     } else {
       this.#currentInterchange = new Interchange();
     }
   }
 
-  public handleInterchangeClose(segment?: Segment) {
+  public handleInterchangeClose(segment?: Segment): void {
     if (this.#currentInterchange) {
       if (segment) {
         this.parseInterchangeTrailer(segment, this.#currentInterchange);
@@ -111,7 +112,7 @@ export default class InterchangeParser {
     this.#currentInterchange = null;
   }
 
-  public prepareForMessages() {
+  public prepareForMessages(): void {
     if (!this.#currentInterchange) {
       this.#currentInterchange = new Interchange();
     }
@@ -120,17 +121,17 @@ export default class InterchangeParser {
   private postValidate(interchanges: Interchange[]) {
     if (!this.#strict) return;
 
-    for (const interchange of interchanges) {
+    interchanges.forEach((interchange) => {
       if (interchange.declaredMessageCount !== interchange.messages.length) {
         throw new EdifactValidationError();
       }
 
-      for (const message of interchange.messages) {
+      interchange.messages.forEach((message) => {
         if (message.declaredSegmentCount !== message.segments.length + 2) {
           throw new EdifactValidationError();
         }
-      }
-    }
+      });
+    });
   }
 
   public terminate(): Interchange[] {

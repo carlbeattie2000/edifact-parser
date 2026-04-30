@@ -1,15 +1,21 @@
-import type Message from "../message/index.js";
+import type Message from '../message/index.js';
 
 export default class Interchange {
-	public syntaxIdentifier: string = '';
-	public syntaxVersion: string = '';
-	public senderId: string = '';
-	public recipientId: string = '';
-	public date: string = '';
-	public time: string = '';
-	public controlReference: string = '';
+  public syntaxIdentifier = '';
 
-	public messages: Message[] = [];
+  public syntaxVersion = '';
 
-	public declaredMessageCount: number = 0;
+  public senderId = '';
+
+  public recipientId = '';
+
+  public date = '';
+
+  public time = '';
+
+  public controlReference = '';
+
+  public messages: Message[] = [];
+
+  public declaredMessageCount = 0;
 }

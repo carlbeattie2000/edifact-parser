@@ -1,9 +1,10 @@
-import { EdifactSyntaxError } from '../errors.js';
 import ComponentDataElement from './elements/component_data_element.js';
 import DataElement from './elements/data_element.js';
 import InterchangeResult from './interchange/interchage_result.js';
 import InterchangeParser from './interchange/interchange_parser.js';
+import MessageParser from './message/message_parser.js';
 import Segment from './segment.js';
+import EdifactSyntaxError from '../errors/EdifactSyntaxError.js';
 
 import type Interchange from './interchange/interchange.js';
 
@@ -33,17 +34,22 @@ export default class Parser {
     if (this.#rawContent.trimStart().startsWith('UNA')) {
       const unaSpeicalCharacters = this.#rawContent.slice(3, 9).split('');
 
-      this.#DEFAULTS.componentSeparator = unaSpeicalCharacters[0] ?? this.#DEFAULTS.componentSeparator;
-      this.#DEFAULTS.dataElementSeparator = unaSpeicalCharacters[1] ?? this.#DEFAULTS.dataElementSeparator;
-      this.#DEFAULTS.decimalNotation = unaSpeicalCharacters[2] ?? this.#DEFAULTS.decimalNotation;
-      this.#DEFAULTS.releaseCharacter = unaSpeicalCharacters[3] ?? this.#DEFAULTS.releaseCharacter;
-      this.#DEFAULTS.segmentTerminator = unaSpeicalCharacters[5] ?? this.#DEFAULTS.segmentTerminator;
+      this.#DEFAULTS.componentSeparator = unaSpeicalCharacters[0]
+        ?? this.#DEFAULTS.componentSeparator;
+      this.#DEFAULTS.dataElementSeparator = unaSpeicalCharacters[1]
+        ?? this.#DEFAULTS.dataElementSeparator;
+      this.#DEFAULTS.decimalNotation = unaSpeicalCharacters[2]
+        ?? this.#DEFAULTS.decimalNotation;
+      this.#DEFAULTS.releaseCharacter = unaSpeicalCharacters[3]
+        ?? this.#DEFAULTS.releaseCharacter;
+      this.#DEFAULTS.segmentTerminator = unaSpeicalCharacters[5]
+        ?? this.#DEFAULTS.segmentTerminator;
 
-      this.#rawContent = this.deleteChars(this.#rawContent, 9);
+      this.#rawContent = Parser.#deleteChars(this.#rawContent, 9);
     }
   }
 
-  private deleteChars(str: string, count: number): string {
+  static #deleteChars(str: string, count: number): string {
     return str.slice(count);
   }
 
@@ -55,13 +61,13 @@ export default class Parser {
     const tokens: string[] = [];
     let current = '';
 
-    for (let i = 0; i < input.length; i++) {
+    for (let i = 0; i < input.length; i += 1) {
       if (input[i] === this.#DEFAULTS.releaseCharacter) {
         if (i + 1 > input.length) {
           current += input[i];
           continue;
         }
-        i++;
+        i += 1;
         if (stripRelease) {
           current += input[i];
         } else {
@@ -97,7 +103,7 @@ export default class Parser {
   private segments(segments: string[]): Segment[] {
     const parsedSegments: Segment[] = [];
 
-    for (const segment of segments) {
+    segments.forEach((segment) => {
       const rawDataElements = this.split(
         segment,
         this.#DEFAULTS.dataElementSeparator,
@@ -111,10 +117,12 @@ export default class Parser {
           throw new EdifactSyntaxError();
         }
         this.#errors.push(new EdifactSyntaxError());
-        continue;
+        return;
       }
 
-      const rawComponents = rawDataElements.map((rawDataElement) => this.split(rawDataElement, this.#DEFAULTS.componentSeparator, false));
+      const rawComponents = rawDataElements
+        .map((rawDataElement) => this
+          .split(rawDataElement, this.#DEFAULTS.componentSeparator, false));
 
       const dataElements = rawComponents.map((rawComponentCollection) => {
         const components = rawComponentCollection.map(
@@ -125,7 +133,7 @@ export default class Parser {
       });
 
       parsedSegments.push(new Segment(tag, dataElements));
-    }
+    });
 
     return parsedSegments;
   }
@@ -141,7 +149,7 @@ export default class Parser {
     });
   }
 
-  public interchanges(segments: Segment[]) {
+  public interchanges(segments: Segment[]): Interchange[] {
     const interchangeParser = new InterchangeParser(this.#strict);
 
     this.preValidate(segments, [
@@ -149,32 +157,32 @@ export default class Parser {
       interchangeParser.messageParser.strictModeMessagesCheck.bind(interchangeParser.messageParser),
     ]);
 
-    for (const segment of segments) {
-      if (interchangeParser.isInterchangeHeader(segment)) {
+    segments.forEach((segment) => {
+      if (InterchangeParser.isInterchangeHeader(segment)) {
         interchangeParser.handleInterchangeOpen(segment);
-        continue;
+        return;
       }
 
-      if (interchangeParser.isInterchangeTrailer(segment)) {
+      if (InterchangeParser.isInterchangeTrailer(segment)) {
         interchangeParser.handleInterchangeClose(segment);
-        continue;
+        return;
       }
 
       interchangeParser.prepareForMessages();
 
-      if (interchangeParser.messageParser.isMessageHeader(segment)) {
+      if (MessageParser.isMessageHeader(segment)) {
         interchangeParser.messageParser.handleOpenMessage(segment);
-        continue;
+        return;
       }
 
-      if (interchangeParser.messageParser.isMessageTrailer(segment)) {
+      if (MessageParser.isMessageTrailer(segment)) {
         interchangeParser.messageParser.handleCloseMessage(segment);
-        continue;
+        return;
       }
 
       interchangeParser.messageParser.prepareForSegments();
       interchangeParser.messageParser.receiveSegment(segment);
-    }
+    });
 
     const interchanges = interchangeParser.terminate();
 

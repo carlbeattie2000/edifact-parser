@@ -48,4 +48,11 @@ export default defineConfig([
   ...nodeConfig,
   // TypeScript config
   ...typescriptConfig,
+  {
+    name: 'custom/overrides',
+    rules: {
+      'no-param-reassign': ['error', { props: false }],
+      'no-continue': 'off',
+    },
+  },
 ]);

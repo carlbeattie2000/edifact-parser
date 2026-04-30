@@ -118,6 +118,7 @@ segment.getDataElement(0)?.getComponent(1)?.value  // specific component
 
 ```ts
 import { EdifactSyntaxError, EdifactEnvelopeError, EdifactValidationError, InterchangeNotFoundError } from 'neat-edifact'
+
 ```
 
 - `EdifactSyntaxError` — malformed input, e.g. a segment with no tag

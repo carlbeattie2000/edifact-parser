@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { EdifactEnvelopeError, EdifactValidationError, InterchangeNotFoundError } from '../src/errors.js';
+import {
+  EdifactEnvelopeError,
+  EdifactValidationError,
+  InterchangeNotFoundError,
+} from '../src/errors/EdifactEnvelopeError.js';
 import Parser from '../src/parser/index.js';
 
 const VALID_EDIFACT = `UNA:+.? '

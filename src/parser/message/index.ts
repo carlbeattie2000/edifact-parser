@@ -1,14 +1,19 @@
-import type Segment from "../segment.js";
+import type Segment from '../segment.js';
 
 export default class Message {
-	public messageReferenceNumber: string = '';
-	public messageType: string = '';
-	public messageVersion: string = '';
-	public messageRelease: string = '';
-	public controllingAgency: string = '';
-	public associationCode: string = '';
+  public messageReferenceNumber = '';
 
-	public segments: Segment[] = [];
+  public messageType = '';
 
-	public declaredSegmentCount: number = 0;
+  public messageVersion = '';
+
+  public messageRelease = '';
+
+  public controllingAgency = '';
+
+  public associationCode = '';
+
+  public segments: Segment[] = [];
+
+  public declaredSegmentCount = 0;
 }

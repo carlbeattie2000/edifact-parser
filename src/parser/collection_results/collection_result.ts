@@ -43,7 +43,7 @@ export default abstract class CollectionResult<T> {
     return [...this.#items];
   }
 
-  protected isValid(): boolean {
+  public isValid(): boolean {
     return this.#items.length > 0;
   }
 }
