@@ -1,51 +1,19 @@
 import { InterchangeNotFoundError } from '../../errors.js';
+import CollectionResult from '../collection_results/collection_result.js';
 
 import type Interchange from './interchange.js';
 
-export default class InterchangeResult {
-  #values: Interchange[];
-
+export default class InterchangeResult extends CollectionResult<Interchange> {
   #errors: Error[];
 
   constructor(values: Interchange[], errors: Error[]) {
-    this.#values = values;
+    super(values);
     this.#errors = errors;
   }
 
-  public first(): Interchange | undefined {
-    return this.#values[0];
-  }
-
-  public firstOrFail(): Interchange {
-    const interchange = this.#values[0];
-
-    if (!interchange) {
-      throw new InterchangeNotFoundError();
-    }
-
-    return interchange;
-  }
-
-  public at(index: number): Interchange | undefined {
-    return this.#values[index];
-  }
-
-  public atOrFail(index: number): Interchange | undefined {
-    const interchange = this.#values[index];
-
-    if (!interchange) {
-      throw new InterchangeNotFoundError();
-    }
-
-    return interchange;
-  }
-
-  public length(): number {
-    return this.#values.length;
-  }
-
-  public all(): Interchange[] {
-    return [...this.#values];
+  // eslint-disable-next-line class-methods-use-this
+  protected notFoundError(index: number): Error {
+    return new InterchangeNotFoundError(index);
   }
 
   public errors(): Error[] {
@@ -56,7 +24,7 @@ export default class InterchangeResult {
     return this.#errors.length > 0;
   }
 
-  public isValid(): boolean {
-    return this.#errors.length === 0 && this.#values.length > 0;
+  protected isValid(): boolean {
+    return super.isValid() && this.#errors.length === 0;
   }
 }

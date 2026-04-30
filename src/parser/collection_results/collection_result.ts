@@ -5,7 +5,7 @@ export default abstract class CollectionResult<T> {
     this.#items = items;
   }
 
-  protected abstract notFoundError(index?: number): Error;
+  protected abstract notFoundError(index: number): Error;
 
   public first(): T | undefined {
     return this.#items[0];
@@ -15,7 +15,7 @@ export default abstract class CollectionResult<T> {
     const item = this.#items[0];
 
     if (!item) {
-      throw this.notFoundError();
+      throw this.notFoundError(0);
     }
 
     return item;
@@ -29,7 +29,7 @@ export default abstract class CollectionResult<T> {
     const item = this.#items[index];
 
     if (!item) {
-      throw this.notFoundError();
+      throw this.notFoundError(index);
     }
 
     return item;
@@ -43,7 +43,7 @@ export default abstract class CollectionResult<T> {
     return [...this.#items];
   }
 
-  public isValid(): boolean {
+  protected isValid(): boolean {
     return this.#items.length > 0;
   }
 }
