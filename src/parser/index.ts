@@ -1,190 +1,196 @@
-import { EdifactSyntaxError } from "../errors.js";
-import ComponentDataElement from "./elements/component_data_element.js";
-import DataElement from "./elements/data_element.js";
-import type Interchange from "./interchange/interchange.js";
-import InterchangeParser from "./interchange/interchange_parser.js";
-import Segment from "./segment.js";
+import { EdifactSyntaxError } from '../errors.js';
+import ComponentDataElement from './elements/component_data_element.js';
+import DataElement from './elements/data_element.js';
+import InterchangeResult from './interchange/interchage_result.js';
+import InterchangeParser from './interchange/interchange_parser.js';
+import Segment from './segment.js';
+
+import type Interchange from './interchange/interchange.js';
 
 export default class Parser {
-	private strict: boolean;
+  private strict: boolean;
 
-	protected rawContent: string;
+  protected rawContent: string;
 
-	protected DEFAULTS = {
-		componentSeparator: ":",
-		dataElementSeparator: "+",
-		decimalNotation: ".",
-		releaseCharacter: "?",
-		segmentTerminator: "'",
-	};
+  protected DEFAULTS = {
+    componentSeparator: ':',
+    dataElementSeparator: '+',
+    decimalNotation: '.',
+    releaseCharacter: '?',
+    segmentTerminator: "'",
+  };
 
-	constructor(rawContent: string, strict?: boolean) {
-		this.rawContent = rawContent.replace(/\r?\n/g, "");
-		this.strict = strict ?? false;
-		this.parseUNA();
-	}
+  #errors: Error[];
 
-	private parseUNA() {
-		if (this.rawContent.trimStart().startsWith("UNA")) {
-			const unaSpeicalCharacters = this.rawContent.slice(3, 9).split("");
+  constructor(rawContent: string, strict?: boolean) {
+    this.rawContent = rawContent.replace(/\r?\n/g, '');
+    this.strict = strict ?? false;
+    this.#errors = [];
+    this.parseUNA();
+  }
 
-			this.DEFAULTS.componentSeparator =
-				unaSpeicalCharacters[0] ?? this.DEFAULTS.componentSeparator;
-			this.DEFAULTS.dataElementSeparator =
-				unaSpeicalCharacters[1] ?? this.DEFAULTS.dataElementSeparator;
-			this.DEFAULTS.decimalNotation =
-				unaSpeicalCharacters[2] ?? this.DEFAULTS.decimalNotation;
-			this.DEFAULTS.releaseCharacter =
-				unaSpeicalCharacters[3] ?? this.DEFAULTS.releaseCharacter;
-			this.DEFAULTS.segmentTerminator =
-				unaSpeicalCharacters[5] ?? this.DEFAULTS.segmentTerminator;
+  private parseUNA() {
+    if (this.rawContent.trimStart().startsWith('UNA')) {
+      const unaSpeicalCharacters = this.rawContent.slice(3, 9).split('');
 
-			this.rawContent = this.deleteChars(this.rawContent, 9);
-		}
-	}
+      this.DEFAULTS.componentSeparator = unaSpeicalCharacters[0] ?? this.DEFAULTS.componentSeparator;
+      this.DEFAULTS.dataElementSeparator = unaSpeicalCharacters[1] ?? this.DEFAULTS.dataElementSeparator;
+      this.DEFAULTS.decimalNotation = unaSpeicalCharacters[2] ?? this.DEFAULTS.decimalNotation;
+      this.DEFAULTS.releaseCharacter = unaSpeicalCharacters[3] ?? this.DEFAULTS.releaseCharacter;
+      this.DEFAULTS.segmentTerminator = unaSpeicalCharacters[5] ?? this.DEFAULTS.segmentTerminator;
 
-	private deleteChars(str: string, count: number): string {
-		return str.slice(count);
-	}
+      this.rawContent = this.deleteChars(this.rawContent, 9);
+    }
+  }
 
-	public split(
-		input: string,
-		delimiter: string,
-		stripRelease = false,
-	): string[] {
-		const tokens: string[] = [];
-		let current = "";
+  private deleteChars(str: string, count: number): string {
+    return str.slice(count);
+  }
 
-		for (let i = 0; i < input.length; i++) {
-			if (input[i] === this.DEFAULTS.releaseCharacter) {
-				if (i + 1 > input.length) {
-					current += input[i];
-					continue;
-				}
-				i++;
-				if (stripRelease) {
-					current += input[i];
-				} else {
-					current += this.DEFAULTS.releaseCharacter + input[i];
-				}
-				continue;
-			}
+  public split(
+    input: string,
+    delimiter: string,
+    stripRelease = false,
+  ): string[] {
+    const tokens: string[] = [];
+    let current = '';
 
-			if (input[i] === delimiter) {
-				tokens.push(current);
-				current = "";
-				continue;
-			}
+    for (let i = 0; i < input.length; i++) {
+      if (input[i] === this.DEFAULTS.releaseCharacter) {
+        if (i + 1 > input.length) {
+          current += input[i];
+          continue;
+        }
+        i++;
+        if (stripRelease) {
+          current += input[i];
+        } else {
+          current += this.DEFAULTS.releaseCharacter + input[i];
+        }
+        continue;
+      }
 
-			current += input[i];
-		}
+      if (input[i] === delimiter) {
+        tokens.push(current);
+        current = '';
+        continue;
+      }
 
-		if (current.length > 0) {
-			tokens.push(current);
-		}
+      current += input[i];
+    }
 
-		return tokens;
-	}
+    if (current.length > 0) {
+      tokens.push(current);
+    }
 
-	private rawSegments(): string[] {
-		return this.split(
-			this.rawContent,
-			this.DEFAULTS.segmentTerminator,
-			true,
-		).filter(Boolean);
-	}
+    return tokens;
+  }
 
-	private segments(segments: string[]): Segment[] {
-		const parsedSegments: Segment[] = [];
+  private rawSegments(): string[] {
+    return this.split(
+      this.rawContent,
+      this.DEFAULTS.segmentTerminator,
+      true,
+    ).filter(Boolean);
+  }
 
-		for (const segment of segments) {
-			const rawDataElements = this.split(
-				segment,
-				this.DEFAULTS.dataElementSeparator,
-				true,
-			);
+  private segments(segments: string[]): Segment[] {
+    const parsedSegments: Segment[] = [];
 
-			const tag = rawDataElements.shift();
+    for (const segment of segments) {
+      const rawDataElements = this.split(
+        segment,
+        this.DEFAULTS.dataElementSeparator,
+        true,
+      );
 
-			if (!tag) {
-				if (this.strict) {
-					throw new EdifactSyntaxError();
-				}
-				continue;
-			}
+      const tag = rawDataElements.shift();
 
-			const rawComponents = rawDataElements.map((rawDataElement) =>
-				this.split(rawDataElement, this.DEFAULTS.componentSeparator, false),
-			);
+      if (!tag) {
+        if (this.strict) {
+          throw new EdifactSyntaxError();
+        }
+        this.#errors.push(new EdifactSyntaxError());
+        continue;
+      }
 
-			const dataElements = rawComponents.map((rawComponentCollection) => {
-				const components = rawComponentCollection.map(
-					(rawComponent) => new ComponentDataElement(rawComponent),
-				);
+      const rawComponents = rawDataElements.map((rawDataElement) => this.split(rawDataElement, this.DEFAULTS.componentSeparator, false));
 
-				return new DataElement(components);
-			});
+      const dataElements = rawComponents.map((rawComponentCollection) => {
+        const components = rawComponentCollection.map(
+          (rawComponent) => new ComponentDataElement(rawComponent),
+        );
 
-			parsedSegments.push(new Segment(tag, dataElements));
-		}
+        return new DataElement(components);
+      });
 
-		return parsedSegments;
-	}
+      parsedSegments.push(new Segment(tag, dataElements));
+    }
 
-	private preValidate(
-		segments: Segment[],
-		checks: ((segments: Segment[]) => void)[],
-	): void {
-		if (!this.strict) return;
+    return parsedSegments;
+  }
 
-		checks.forEach((check) => {
-			check(segments);
-		});
-	}
+  private preValidate(
+    segments: Segment[],
+    checks: ((segments: Segment[]) => void)[],
+  ): void {
+    if (!this.strict) return;
 
-	public interchanges(segments: Segment[]) {
-		const interchangeParser = new InterchangeParser(this.strict);
+    checks.forEach((check) => {
+      check(segments);
+    });
+  }
 
-		this.preValidate(segments, [
-			interchangeParser.strictModeInterchangeCheck.bind(interchangeParser),
-			interchangeParser.messageParser.strictModeMessagesCheck.bind(interchangeParser.messageParser),
-		]);
+  public interchanges(segments: Segment[]) {
+    const interchangeParser = new InterchangeParser(this.strict);
 
-		for (const segment of segments) {
-			if (interchangeParser.isInterchangeHeader(segment)) {
-				interchangeParser.handleInterchangeOpen(segment);
-				continue;
-			}
+    this.preValidate(segments, [
+      interchangeParser.strictModeInterchangeCheck.bind(interchangeParser),
+      interchangeParser.messageParser.strictModeMessagesCheck.bind(interchangeParser.messageParser),
+    ]);
 
-			if (interchangeParser.isInterchangeTrailer(segment)) {
-				interchangeParser.handleInterchangeClose(segment);
-				continue;
-			}
+    for (const segment of segments) {
+      if (interchangeParser.isInterchangeHeader(segment)) {
+        interchangeParser.handleInterchangeOpen(segment);
+        continue;
+      }
 
-			interchangeParser.prepareForMessages();
+      if (interchangeParser.isInterchangeTrailer(segment)) {
+        interchangeParser.handleInterchangeClose(segment);
+        continue;
+      }
 
-			if (interchangeParser.messageParser.isMessageHeader(segment)) {
-				interchangeParser.messageParser.handleOpenMessage(segment);
-				continue;
-			}
+      interchangeParser.prepareForMessages();
 
-			if (interchangeParser.messageParser.isMessageTrailer(segment)) {
-				interchangeParser.messageParser.handleCloseMessage(segment);
-				continue;
-			}
+      if (interchangeParser.messageParser.isMessageHeader(segment)) {
+        interchangeParser.messageParser.handleOpenMessage(segment);
+        continue;
+      }
 
-			interchangeParser.messageParser.prepareForSegments();
-			interchangeParser.messageParser.receiveSegment(segment);
-		}
+      if (interchangeParser.messageParser.isMessageTrailer(segment)) {
+        interchangeParser.messageParser.handleCloseMessage(segment);
+        continue;
+      }
 
-		const interchanges = interchangeParser.terminate();
+      interchangeParser.messageParser.prepareForSegments();
+      interchangeParser.messageParser.receiveSegment(segment);
+    }
 
-		return interchanges;
-	}
+    const interchanges = interchangeParser.terminate();
 
-	public parse(): Interchange[] {
-		const rawSegments = this.rawSegments();
-		const segments = this.segments(rawSegments);
-		return this.interchanges(segments);
-	}
+    return interchanges;
+  }
+
+  public parse(): Interchange[] {
+    const rawSegments = this.rawSegments();
+    const segments = this.segments(rawSegments);
+    return this.interchanges(segments);
+  }
+
+  public parseResult(): InterchangeResult {
+    const rawSegments = this.rawSegments();
+    const segments = this.segments(rawSegments);
+    const interchanges = this.interchanges(segments);
+    return new InterchangeResult(interchanges, this.#errors);
+  }
 }
