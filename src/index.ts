@@ -5,6 +5,7 @@ export type { default as InterchangeNotFoundError } from './errors/InterchangeNo
 
 export { default as Parser } from './parser/index.js';
 export type { default as Interchange } from './parser/interchange/interchange.js';
+export type { default as InterchangeResult } from './parser/interchange/interchage_result.js';
 export type { default as Message } from './parser/message/index.js';
 export type { default as Segment } from './parser/segment.js';
 export type { default as DataElement } from './parser/elements/data_element.js';
